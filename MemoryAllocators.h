@@ -24,7 +24,7 @@
  */
 
 typedef struct meta_header {
-    struct header* link;
+    struct meta_header* link;
     int status;
     size_t size;
 } meta_header_t;

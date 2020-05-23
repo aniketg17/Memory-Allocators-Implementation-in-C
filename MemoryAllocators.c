@@ -13,7 +13,7 @@ meta_header_t* find_empty_space(size_t);
 
 void* malloc(size_t bytes) {
     void* block_return;
-    
+
     if (bytes <= 0) {
         return NULL;
     }
@@ -22,7 +22,7 @@ void* malloc(size_t bytes) {
     meta_header_t *free_header = find_empty_space(bytes);
 
     if (free_header != NULL) {
-        pthread_mutex_unlock(&global_memory_lock);
+        pthread_mutex_unlock(&global_memory_lock); // unlocking because done with memory related work
         free_header->status = OCCUPIED;
 
         /*
@@ -35,7 +35,52 @@ void* malloc(size_t bytes) {
         return block_return; 
     }
 
-    return NULL;
+    /*  
+     *  if we reach here, it means that there was not an empty space found
+     *  by find_empty_space() in which case we would need to increase
+     * the heap size
+     */
+
+    size_t total_size = META_SIZE + bytes;
+    block_return = sbrk(total_size); // heap increased by header size + the data size required
+                                     // by using the system call making sbrk()
+
+    /*
+     * This case is if sbrk() is unable to
+     * increase heap size
+     */
+
+    if (block_return == (void*) -1) {
+        pthread_mutex_unlock(&global_memory_lock);
+        return NULL;
+    }
+
+    meta_header_t *new_header = block_return;
+
+    /*
+     * Setting appropriate metadata of new pointer
+     */
+
+    new_header->size = total_size - META_SIZE;
+    new_header->status = OCCUPIED;
+    new_header->link = NULL;
+
+    if (head == NULL) {
+        head = new_header;
+        head->link = NULL;
+    }
+
+    if (tail == NULL) {
+        tail = new_header;
+        tail->link = NULL;
+    } else {
+        tail->link = new_header;
+        tail = tail->link;
+    }
+
+    pthread_mutex_unlock(&global_memory_lock);
+
+    return (block_return + META_SIZE);
 }
 
 meta_header_t* find_empty_space(size_t size) {
