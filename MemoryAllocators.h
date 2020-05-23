@@ -34,7 +34,7 @@ void free(void*);
 void* realloc(void*, size_t);
 void* calloc(size_t, size_t);
 
-extern pthread_mutex_t global_malloc_lock; // used to keep processes thread-safe
+extern pthread_mutex_t global_memory_lock; // used to keep processes thread-safe
 extern meta_header_t *head;
 extern meta_header_t *tail;
 

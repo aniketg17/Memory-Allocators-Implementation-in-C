@@ -5,18 +5,41 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-pthread_mutex_t global_malloc_t;
+pthread_mutex_t global_memory_lock;
 meta_header_t *head;
 meta_header_t *tail;
 
+meta_header_t* find_empty_space(size_t);
+
 void* malloc(size_t bytes) {
+    void* block_return;
+    
     if (bytes <= 0) {
         return NULL;
     }
+
+    pthread_mutex_lock(&global_memory_lock);
+    meta_header_t *free_header = find_empty_space(bytes);
+
+    if (free_header != NULL) {
+        pthread_mutex_unlock(&global_memory_lock);
+        free_header->status = OCCUPIED;
+
+        /*
+         * returning free_header + 1 so that the pointer
+         * actually starts from after the header (directly
+         * where non-meta-data memory will be stored)
+         */
+
+        block_return = (void*) (free_header + 1);
+        return block_return; 
+    }
+
     return NULL;
 }
 
 meta_header_t* find_empty_space(size_t size) {
+    assert(size > 0);
     meta_header_t *traverse = head;
     while (traverse != NULL) {
         if (traverse->status == FREE && traverse->size >= size) {
