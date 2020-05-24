@@ -42,8 +42,7 @@ void* malloc(size_t bytes) {
      */
 
     size_t total_size = META_SIZE + bytes;
-    block_return = sbrk(total_size); // heap increased by header size + the data size required
-                                     // by using the system call making sbrk()
+    block_return = sbrk(total_size); // heap increased by using the system call from sbrk()
 
     /*
      * This case is if sbrk() is unable to
@@ -61,7 +60,7 @@ void* malloc(size_t bytes) {
      * Setting appropriate metadata of new pointer
      */
 
-    new_header->size = total_size - META_SIZE;
+    new_header->size = bytes;
     new_header->status = OCCUPIED;
     new_header->link = NULL;
 
@@ -83,19 +82,73 @@ void* malloc(size_t bytes) {
     return (block_return + META_SIZE);
 }
 
+
+
 meta_header_t* find_empty_space(size_t size) {
-    assert(size > 0);
     meta_header_t *traverse = head;
     while (traverse != NULL) {
         if (traverse->status == FREE && traverse->size >= size) {
             return traverse;
         }
+        traverse = traverse->link;
     }
-    return NULL;
+    return traverse;
 }
 
 void free(void *ptr) {
-    return;
+    // 2 cases: either at the end of a heap OR in between somewhere
+
+    if (ptr == NULL) {
+        return;
+    }
+
+    pthread_mutex_lock(&global_memory_lock);
+
+    void* current_heap_height = sbrk(0);
+
+    meta_header_t *linked_header = (meta_header_t*) ptr - 1;
+
+    if (current_heap_height == ((char*) ptr) + linked_header->size) { // casted to char to 
+        //ensure pointer addition 
+        //is by correct units
+
+        /*
+         * This means that the memory to remove is at end of heap
+         */
+
+        sbrk(0 - linked_header->size - META_SIZE);
+
+        if (head == tail) {
+            head = NULL;
+            tail = NULL;
+        } else {
+            meta_header_t *traverse = head;
+
+            while (traverse->link != NULL) { // traversing till null in case passed in pointer was externally malloc'ed
+                if (traverse->link == linked_header) {
+                    traverse->link = NULL;
+                    tail = traverse;
+                    break;
+                }
+                traverse = traverse->link;
+            }
+        }
+        pthread_mutex_unlock(&global_memory_lock);
+        return;
+    } else {
+        meta_header_t *traverse = head;
+
+        while (traverse->link != NULL) { // traversing till null in case passed in pointer was externally malloc'ed
+            if (traverse->link == linked_header) {
+                traverse->link->status = FREE;
+                break;
+            }
+            traverse = traverse->link;
+        }
+
+        pthread_mutex_unlock(&global_memory_lock);
+        return;
+    }
 }
 
 void* realloc(void* ptr, size_t bytes) {
@@ -108,6 +161,22 @@ void* calloc(size_t count, size_t size) {
 
 int main() {
     //printf("%lu size_t %lu signed %lu unsigned\n", sizeof(size_t), sizeof(signed), sizeof(unsigned));
-    
-    printf("%lu\n",sizeof(meta_header_t));
+
+    int *a = malloc(8);
+
+    printf("%lu\n", sizeof(a));
+
+    for (int i = 0; i < 8; i++) {
+        a[i] = 94;
+    }
+
+    for (int i = 0; i < 8; i++) {
+        printf("%d\n", a[i]);
+    }
+
+    printf("end\n");
+
+    free(a);
+
+    printf("%lu\n", sizeof(a));
 }
