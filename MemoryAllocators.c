@@ -183,7 +183,7 @@ void* calloc(size_t size, size_t multiplier) {
     }
 
     void *allocated_memory = malloc(total_size);
-    
+    memset(allocated_memory, 0, total_size); // setting all memory components to 0 
     return allocated_memory;
 }
 
