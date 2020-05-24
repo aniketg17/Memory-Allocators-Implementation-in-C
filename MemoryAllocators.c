@@ -150,7 +150,7 @@ void* realloc(void* ptr, size_t bytes) {
     if (ptr == NULL) {
         return malloc(bytes);
     }
-    meta_header_t *ptr_header = (meta_header_t*) ptr - 1;
+    meta_header_t *ptr_header = (meta_header_t*) ptr - 1; // getting header of block
     
     if (ptr_header->size >= bytes) {
         return ptr;
@@ -162,13 +162,29 @@ void* realloc(void* ptr, size_t bytes) {
         return NULL;
     }
 
-    memcpy(new_free_space, ptr, ptr_header->size);
+    memcpy(new_free_space, ptr, ptr_header->size); // copying old information if needed
     free(ptr);
     return new_free_space;
 }
 
-void* calloc(size_t count, size_t size) {
-    return NULL;
+void* calloc(size_t size, size_t multiplier) {
+    if (size <= 0 || multiplier <= 0) {
+        return NULL;
+    }
+
+    size_t total_size = size * multiplier;
+
+    /*
+     * checking for overflow
+     */
+
+    if (multiplier != (total_size / size)) {
+        return NULL;
+    }
+
+    void *allocated_memory = malloc(total_size);
+    
+    return allocated_memory;
 }
 
 int main() {
