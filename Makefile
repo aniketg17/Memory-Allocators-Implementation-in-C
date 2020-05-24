@@ -1,7 +1,7 @@
 #makefile : for memory allocators
 
 all:
-	gcc -g -Wall -std=c99 MemoryAllocators.c -o MemoryAllocators
+	gcc -g -std=c99 MemoryAllocators.c -o MemoryAllocators
 
 git:
 	git add .

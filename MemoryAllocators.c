@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <string.h> // for testing
 
 pthread_mutex_t global_memory_lock;
 meta_header_t *head;
@@ -116,9 +117,10 @@ void free(void *ptr) {
          * This means that the memory to remove is at end of heap
          */
 
-        sbrk(0 - linked_header->size - META_SIZE);
+        printf("entered the heap part\n");
 
         if (head == tail) {
+            printf("Head == tail\n");
             head = NULL;
             tail = NULL;
         } else {
@@ -133,26 +135,36 @@ void free(void *ptr) {
                 traverse = traverse->link;
             }
         }
+        printf("%d %d\n", linked_header->size, META_SIZE);
+        sbrk(0 - linked_header->size - META_SIZE);
         pthread_mutex_unlock(&global_memory_lock);
         return;
     } else {
-        meta_header_t *traverse = head;
-
-        while (traverse->link != NULL) { // traversing till null in case passed in pointer was externally malloc'ed
-            if (traverse->link == linked_header) {
-                traverse->link->status = FREE;
-                break;
-            }
-            traverse = traverse->link;
-        }
-
+        linked_header->status = FREE;
         pthread_mutex_unlock(&global_memory_lock);
         return;
     }
 }
 
 void* realloc(void* ptr, size_t bytes) {
-    return NULL;
+    if (ptr == NULL) {
+        return malloc(bytes);
+    }
+    meta_header_t *ptr_header = (meta_header_t*) ptr - 1;
+    
+    if (ptr_header->size >= bytes) {
+        return ptr;
+    }
+
+    void* new_free_space = malloc(bytes);
+
+    if (new_free_space == NULL) {
+        return NULL;
+    }
+
+    memcpy(new_free_space, ptr, ptr_header->size);
+    free(ptr);
+    return new_free_space;
 }
 
 void* calloc(size_t count, size_t size) {
@@ -164,7 +176,13 @@ int main() {
 
     int *a = malloc(8);
 
-    printf("%lu\n", sizeof(a));
+    int* name = malloc(11);
+
+    //strcpy(name, "Aniketreer");
+
+    printf("%lu %lu\n", sizeof(a), sizeof(name));
+
+    //printf("%s\n", name);
 
     for (int i = 0; i < 8; i++) {
         a[i] = 94;
@@ -178,5 +196,13 @@ int main() {
 
     free(a);
 
-    printf("%lu\n", sizeof(a));
+    a = NULL;
+
+   // printf("%s\n", name);
+
+    for (int i = 0; i < 8; i++) {
+        printf("%d\n", a[i]);
+    }
+
+    
 }
