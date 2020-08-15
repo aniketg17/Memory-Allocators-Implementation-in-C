@@ -4,7 +4,7 @@
 This is my own implementation of memory allocators such as malloc(), calloc(), realloc(), and free() in C.
 
 ## Motivation
-Having completed my 'Programming in C' class at Purdue where we extensively used the aforementioned memory allocators, I decided to implement these myself to deepen my understanding of the internals of how C works and how intricate memory management really is. Although this implementation is not as robust as C's libraries', it serves the purpose for most uses.
+Having completed my 'Programming in C' class at Purdue where we extensively used the aforementioned memory allocators, I decided to implement these myself to deepen my understanding of the internals of how C works and to see how intricate memory management really is. Although this implementation is not as robust as C's libraries', it serves the purpose for most uses. The allocators are implemented using linked lists.
 
 ## Steps to run the project
 There is a Makefile associated with the project which streamlines compilation.
