@@ -18,4 +18,5 @@ If you are using these allocators with another program, then do the following:
 2. Run the application with the command './Program'.
 
 There is an additional command to upload to git too which can be used by typing 'make git'.
-Note: The above command 'make git' will only work if you have initialized a git repository.
+
+Note: The above command will only work if you have initialized a git repository.
